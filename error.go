@@ -1,5 +1,9 @@
 package mft
 
+import (
+	"strconv"
+)
+
 // Error type with internal
 type Error struct {
 	Code          int    `json:"code,omitempty"`
@@ -16,10 +20,15 @@ func (e *Error) Error() string {
 		return ""
 	}
 
-	if e.InternalError == "" {
-		return e.Msg
+	cd := ""
+	if e.Code != 0 {
+		cd = "[" + strconv.Itoa(e.Code) + "] "
 	}
-	return e.Msg + "\n" + e.InternalError
+
+	if e.InternalError == "" {
+		return cd + e.Msg
+	}
+	return cd + e.Msg + "\n" + e.InternalError
 }
 
 // ErrorCS make Error from string
