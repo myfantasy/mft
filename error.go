@@ -31,6 +31,15 @@ func (e *Error) Error() string {
 	return cd + e.Msg + "\n" + e.InternalError
 }
 
+// ErrorCSE make Error from string with internal error
+func ErrorCSE(code int, err string, internalError error) *Error {
+	return &Error{
+		Msg:           err,
+		Code:          code,
+		InternalError: internalError.Error(),
+	}
+}
+
 // ErrorCS make Error from string
 func ErrorCS(code int, err string) *Error {
 	return &Error{
