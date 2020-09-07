@@ -11,6 +11,7 @@ type G struct {
 	rvc  int64
 	rvgl int64
 	rvmx sync.Mutex
+	//rvmx RWCMutex
 
 	AddValue int64
 }
