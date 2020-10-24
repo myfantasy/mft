@@ -21,14 +21,14 @@ func (e *Error) Error() string {
 	}
 
 	cd := ""
-	if e.Code != 0 {
+	if e.Code != 0 && e.Code != ErrorCommonCode {
 		cd = "[" + strconv.Itoa(e.Code) + "] "
 	}
 
 	if e.InternalError == "" {
 		return cd + e.Msg
 	}
-	return cd + e.Msg + "\n" + e.InternalError
+	return cd + e.Msg + "\t" + e.InternalError
 }
 
 // ErrorCSE make Error from string with internal error
