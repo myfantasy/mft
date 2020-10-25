@@ -1,5 +1,8 @@
 # mft
 some tools (golang)
+RWCMutex - rwmutex with TryLock(context) method  
+PMutex - rwmutex with TryLock(context) method and change mode between Lock and RLock  
+G - generator next id
 
 ## RWCMutex
 RWCMutex is RW mutex with `TryLock` method.  
