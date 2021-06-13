@@ -6,9 +6,10 @@ import (
 
 // Error type with internal
 type Error struct {
-	Code          int    `json:"code,omitempty"`
-	Msg           string `json:"msg,omitempty"`
-	InternalError string `json:"ie,omitempty"`
+	Code              int    `json:"code,omitempty"`
+	Msg               string `json:"msg,omitempty"`
+	InternalErrorText string `json:"iet,omitempty"`
+	InternalError     *Error `json:"ie,omitempty"`
 }
 
 // ErrorCommonCode - no code error
@@ -25,18 +26,31 @@ func (e *Error) Error() string {
 		cd = "[" + strconv.Itoa(e.Code) + "] "
 	}
 
-	if e.InternalError == "" {
+	if e.InternalErrorText == "" && e.InternalError == nil {
 		return cd + e.Msg
+	} else if e.InternalErrorText == "" {
+		return cd + e.Msg + "\t" + e.InternalError.Error()
+	} else if e.InternalError == nil {
+		return cd + e.Msg + "\t" + e.InternalErrorText
 	}
-	return cd + e.Msg + "\t" + e.InternalError
+
+	return cd + e.Msg + "\t" + e.InternalError.Error() + "\t" + e.InternalErrorText
 }
 
 // ErrorCSE make Error from string with internal error
 func ErrorCSE(code int, err string, internalError error) *Error {
+	er, ok := internalError.(*Error)
+	if !ok {
+		return &Error{
+			Msg:               err,
+			Code:              code,
+			InternalErrorText: internalError.Error(),
+		}
+	}
 	return &Error{
 		Msg:           err,
 		Code:          code,
-		InternalError: internalError.Error(),
+		InternalError: er,
 	}
 }
 
@@ -68,7 +82,7 @@ func ErrorCE(code int, err error) *Error {
 func (e *Error) AppendS(errs string) *Error {
 	return &Error{
 		Msg:           errs,
-		InternalError: e.Error(),
+		InternalError: e,
 		Code:          e.Code,
 	}
 }
@@ -77,7 +91,7 @@ func (e *Error) AppendS(errs string) *Error {
 func (e *Error) AppendE(errs error) *Error {
 	return &Error{
 		Msg:           errs.Error(),
-		InternalError: e.Error(),
+		InternalError: e,
 		Code:          e.Code,
 	}
 }
@@ -92,9 +106,17 @@ func ErrorE(err error) *Error {
 
 // ErrorNew - Create new Error from msg and another error
 func ErrorNew(msg string, internalError error) *Error {
+	er, ok := internalError.(*Error)
+	if !ok {
+		return &Error{
+			Msg:               msg,
+			InternalErrorText: internalError.Error(),
+			Code:              ErrorCommonCode,
+		}
+	}
 	return &Error{
 		Msg:           msg,
-		InternalError: internalError.Error(),
+		InternalError: er,
 		Code:          ErrorCommonCode,
 	}
 }
