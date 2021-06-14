@@ -2,6 +2,7 @@ package mft
 
 import (
 	"strconv"
+	"strings"
 )
 
 // Error type with internal
@@ -14,6 +15,10 @@ type Error struct {
 
 // ErrorCommonCode - no code error
 const ErrorCommonCode int = 50000
+
+func rowPrefixAdd(s string, prefix string) (out string) {
+	return prefix + strings.ReplaceAll(s, "\n", "\n"+prefix)
+}
 
 // Error implement error interface
 func (e *Error) Error() string {
@@ -29,12 +34,13 @@ func (e *Error) Error() string {
 	if e.InternalErrorText == "" && e.InternalError == nil {
 		return cd + e.Msg
 	} else if e.InternalErrorText == "" {
-		return cd + e.Msg + "\t" + e.InternalError.Error()
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), "\t")
 	} else if e.InternalError == nil {
-		return cd + e.Msg + "\t" + e.InternalErrorText
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, "\t")
 	}
 
-	return cd + e.Msg + "\t" + e.InternalError.Error() + "\t" + e.InternalErrorText
+	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), "\t") +
+		"\n" + rowPrefixAdd(e.InternalErrorText, "\t")
 }
 
 // ErrorCSE make Error from string with internal error
