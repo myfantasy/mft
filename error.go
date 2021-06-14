@@ -20,6 +20,8 @@ func rowPrefixAdd(s string, prefix string) (out string) {
 	return prefix + strings.ReplaceAll(s, "\n", "\n"+prefix)
 }
 
+var InnerErrorPrefix string = "  "
+
 // Error implement error interface
 func (e *Error) Error() string {
 	if e == nil {
@@ -34,13 +36,13 @@ func (e *Error) Error() string {
 	if e.InternalErrorText == "" && e.InternalError == nil {
 		return cd + e.Msg
 	} else if e.InternalErrorText == "" {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), "\t")
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix)
 	} else if e.InternalError == nil {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, "\t")
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix)
 	}
 
-	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), "\t") +
-		"\n" + rowPrefixAdd(e.InternalErrorText, "\t")
+	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) +
+		"\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix)
 }
 
 // ErrorCSE make Error from string with internal error
