@@ -11,11 +11,11 @@ func BenchmarkRvGet(b *testing.B) {
 	}
 }
 
-func BenchmarkRvGet2(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		RvGet2()
-	}
-}
+// func BenchmarkRvGet2(b *testing.B) {
+// 	for i := 0; i < b.N; i++ {
+// 		RvGet2()
+// 	}
+// }
 
 func BenchmarkRvGetPart(b *testing.B) {
 	for i := 0; i < b.N; i++ {
@@ -33,9 +33,9 @@ func TestRvGet(t *testing.T) {
 	RvGet()
 }
 
-func TestRvGet2(t *testing.T) {
-	RvGet2()
-}
+// func TestRvGet2(t *testing.T) {
+// 	RvGet2()
+// }
 
 func TestRvGetPart(t *testing.T) {
 	RvGetPart()
