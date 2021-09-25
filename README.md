@@ -1,34 +1,6 @@
 # mft
 some tools (golang)
-RWCMutex - rwmutex with TryLock(context) method  
-PMutex - rwmutex with TryLock(context) method and change mode between Lock and RLock  
 G - generator next id
-
-## RWCMutex
-RWCMutex is RW mutex with `TryLock` method.  
-TryLock try locks mutex until context done. TryLock returns true when success and false when not.  
-LockD try locks mutex until during input duration.  
-
-## PMutex
-PMutex is RW mutex with `TryLock` method and you can `Promote` RLock to Lock and `Reduce` from Lock to RLock.  
-PMutex works slowly then RWCMutex  
-
-PMutex.Lock method returns lock key  
-You must not lose this key, because you need it to unlock.  
-You can use `TryUnlock` multiple times.
-
-```
-	k := mx.Lock()
-    ...
-	mx.TryUnlock(k)
-    ...
-	mx.TryUnlock(k)
-```
-```
-	k := mx.Lock()
-    ...
-	mx.Unlock(k)
-```
 
 
 ## Error

@@ -8,10 +8,11 @@ import (
 
 // Error type with internal
 type Error struct {
-	Code              int    `json:"code,omitempty"`
-	Msg               string `json:"msg,omitempty"`
-	InternalErrorText string `json:"iet,omitempty"`
-	InternalError     *Error `json:"ie,omitempty"`
+	Code              int      `json:"code,omitempty"`
+	Msg               string   `json:"msg,omitempty"`
+	InternalErrorText string   `json:"iet,omitempty"`
+	InternalError     *Error   `json:"ie,omitempty"`
+	InternalErrors    []*Error `json:"ies,omitempty"`
 }
 
 // ErrorCommonCode - no code error
@@ -34,12 +35,25 @@ func (e *Error) Error() string {
 		cd = "[" + strconv.Itoa(e.Code) + "] "
 	}
 
+	listMsgs := ""
+	if len(e.InternalErrors) > 0 {
+		for i, erI := range e.InternalErrors {
+			if i > 0 {
+				listMsgs += ";\n"
+			}
+			listMsgs += erI.Error()
+		}
+		listMsgs = rowPrefixAdd(listMsgs, InnerErrorPrefix)
+		listMsgs = "[\n" + listMsgs + "\n]"
+		listMsgs = "\n" + rowPrefixAdd(listMsgs, InnerErrorPrefix)
+	}
+
 	if e.InternalErrorText == "" && e.InternalError == nil {
-		return cd + e.Msg
+		return cd + e.Msg + listMsgs
 	} else if e.InternalErrorText == "" {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix)
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) + listMsgs
 	} else if e.InternalError == nil {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix)
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs
 	}
 
 	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) +
@@ -197,4 +211,19 @@ func ErrorNew2(msg string, internalError error, internal2Error error) *Error {
 // ErrorNew2f - Create new Error
 func ErrorNew2f(internalError error, internal2Error error, format string, a ...interface{}) *Error {
 	return ErrorNewf(ErrorNew(internalError.Error(), internal2Error), format, a...)
+}
+
+func (e *Error) AppendList(sub ...*Error) (eOut *Error) {
+	eOut = e
+	for _, ei := range sub {
+		if ei == nil {
+			continue
+		}
+		if eOut == nil {
+			eOut = &Error{}
+		}
+
+		eOut.InternalErrors = append(eOut.InternalErrors, ei)
+	}
+	return eOut
 }

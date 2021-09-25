@@ -3,6 +3,7 @@ package mft
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -27,5 +28,26 @@ func TestErrors(t *testing.T) {
 
 	if `{"code":50000,"msg":"msg2","ie":{"code":50000,"msg":"ttt","ie":{"code":50000,"msg":"msg1","iet":"ttt"}}}` != string(b2) {
 		t.Fatal("Error 2 fail", "  ", string(b2))
+	}
+}
+
+func TestErrorShow(t *testing.T) {
+	err := ErrorSf("abc %v", 5)
+	err = err.AppendList(ErrorE(fmt.Errorf("fmt.Errorf")),
+		ErrorCSf(222, "ErrorCSf %v", 99).AppendList(ErrorCSf(333, "ErrorCSf 2 %v", 88)))
+
+	s := err.Error()
+
+	sCheck := `abc 5
+  [
+    fmt.Errorf;
+    [222] ErrorCSf 99
+      [
+        [333] ErrorCSf 2 88
+      ]
+  ]`
+
+	if s != sCheck {
+		t.Fatalf("`%v`\n!=\n`%v`", s, sCheck)
 	}
 }
