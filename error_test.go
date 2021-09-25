@@ -36,6 +36,7 @@ func TestErrorShow(t *testing.T) {
 	err = err.AppendList(ErrorE(fmt.Errorf("fmt.Errorf")),
 		ErrorCSf(222, "ErrorCSf %v", 99).AppendList(ErrorCSf(333, "ErrorCSf 2 %v", 88)))
 
+	err.CallStack = "abc"
 	s := err.Error()
 
 	sCheck := `abc 5
@@ -45,9 +46,20 @@ func TestErrorShow(t *testing.T) {
       [
         [333] ErrorCSf 2 88
       ]
-  ]`
+  ]
+  abc`
 
 	if s != sCheck {
 		t.Fatalf("`%v`\n!=\n`%v`", s, sCheck)
+	}
+}
+
+func TestErrorStack(t *testing.T) {
+	FillCallStack = true
+	err := ErrorSf("abc %v", 5)
+	FillCallStack = false
+
+	if err.CallStack == "" {
+		t.Fatalf("Call Stack should be set")
 	}
 }

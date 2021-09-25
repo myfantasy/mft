@@ -2,6 +2,7 @@ package mft
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -13,6 +14,7 @@ type Error struct {
 	InternalErrorText string   `json:"iet,omitempty"`
 	InternalError     *Error   `json:"ie,omitempty"`
 	InternalErrors    []*Error `json:"ies,omitempty"`
+	CallStack         string   `json:"call_stack,omitempty"`
 }
 
 // ErrorCommonCode - no code error
@@ -23,6 +25,7 @@ func rowPrefixAdd(s string, prefix string) (out string) {
 }
 
 var InnerErrorPrefix string = "  "
+var FillCallStack bool = false
 
 // Error implement error interface
 func (e *Error) Error() string {
@@ -48,16 +51,28 @@ func (e *Error) Error() string {
 		listMsgs = "\n" + rowPrefixAdd(listMsgs, InnerErrorPrefix)
 	}
 
+	callStack := ""
+	if e.CallStack != "" {
+		callStack = "\n" + rowPrefixAdd(e.CallStack, InnerErrorPrefix)
+	}
+
 	if e.InternalErrorText == "" && e.InternalError == nil {
-		return cd + e.Msg + listMsgs
+		return cd + e.Msg + listMsgs + callStack
 	} else if e.InternalErrorText == "" {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) + listMsgs
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) + listMsgs + callStack
 	} else if e.InternalError == nil {
-		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs
+		return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs + callStack
 	}
 
 	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) +
-		"\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix)
+		"\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs + callStack
+}
+
+func GetStack() string {
+	if !FillCallStack {
+		return ""
+	}
+	return string(debug.Stack())
 }
 
 // ErrorCSE make Error from string with internal error
@@ -68,12 +83,14 @@ func ErrorCSE(code int, err string, internalError error) *Error {
 			Msg:               err,
 			Code:              code,
 			InternalErrorText: internalError.Error(),
+			CallStack:         GetStack(),
 		}
 	}
 	return &Error{
 		Msg:           err,
 		Code:          code,
 		InternalError: er,
+		CallStack:     GetStack(),
 	}
 }
 
@@ -85,52 +102,59 @@ func ErrorCSEf(code int, internalError error, format string, a ...interface{}) *
 			Msg:               fmt.Sprintf(format, a...),
 			Code:              code,
 			InternalErrorText: internalError.Error(),
+			CallStack:         GetStack(),
 		}
 	}
 	return &Error{
 		Msg:           fmt.Sprintf(format, a...),
 		Code:          code,
 		InternalError: er,
+		CallStack:     GetStack(),
 	}
 }
 
 // ErrorCS make Error from string
 func ErrorCS(code int, err string) *Error {
 	return &Error{
-		Msg:  err,
-		Code: code,
+		Msg:       err,
+		Code:      code,
+		CallStack: GetStack(),
 	}
 }
 
 // ErrorCSf make Error from string
 func ErrorCSf(code int, format string, a ...interface{}) *Error {
 	return &Error{
-		Msg:  fmt.Sprintf(format, a...),
-		Code: code,
+		Msg:       fmt.Sprintf(format, a...),
+		Code:      code,
+		CallStack: GetStack(),
 	}
 }
 
 // ErrorS make Error from string
 func ErrorS(err string) *Error {
 	return &Error{
-		Msg:  err,
-		Code: ErrorCommonCode,
+		Msg:       err,
+		Code:      ErrorCommonCode,
+		CallStack: GetStack(),
 	}
 }
 
 // ErrorSf make Error from string
 func ErrorSf(format string, a ...interface{}) *Error {
 	return &Error{
-		Msg:  fmt.Sprintf(format, a...),
-		Code: ErrorCommonCode,
+		Msg:       fmt.Sprintf(format, a...),
+		Code:      ErrorCommonCode,
+		CallStack: GetStack(),
 	}
 }
 
 // ErrorCE make Error from any error
 func ErrorCE(code int, err error) *Error {
 	return &Error{
-		Msg:  err.Error(),
-		Code: code,
+		Msg:       err.Error(),
+		Code:      code,
+		CallStack: GetStack(),
 	}
 }
 
@@ -140,6 +164,7 @@ func (e *Error) AppendS(errs string) *Error {
 		Msg:           errs,
 		InternalError: e,
 		Code:          e.Code,
+		CallStack:     GetStack(),
 	}
 }
 
@@ -149,6 +174,7 @@ func (e *Error) AppendSf(format string, a ...interface{}) *Error {
 		Msg:           fmt.Sprintf(format, a...),
 		InternalError: e,
 		Code:          e.Code,
+		CallStack:     GetStack(),
 	}
 }
 
@@ -158,14 +184,16 @@ func (e *Error) AppendE(errs error) *Error {
 		Msg:           errs.Error(),
 		InternalError: e,
 		Code:          e.Code,
+		CallStack:     GetStack(),
 	}
 }
 
 // ErrorE make Error from any error
 func ErrorE(err error) *Error {
 	return &Error{
-		Msg:  err.Error(),
-		Code: ErrorCommonCode,
+		Msg:       err.Error(),
+		Code:      ErrorCommonCode,
+		CallStack: GetStack(),
 	}
 }
 
@@ -177,12 +205,14 @@ func ErrorNew(msg string, internalError error) *Error {
 			Msg:               msg,
 			InternalErrorText: internalError.Error(),
 			Code:              ErrorCommonCode,
+			CallStack:         GetStack(),
 		}
 	}
 	return &Error{
 		Msg:           msg,
 		InternalError: er,
 		Code:          ErrorCommonCode,
+		CallStack:     GetStack(),
 	}
 }
 
@@ -194,12 +224,14 @@ func ErrorNewf(internalError error, format string, a ...interface{}) *Error {
 			Msg:               fmt.Sprintf(format, a...),
 			InternalErrorText: internalError.Error(),
 			Code:              ErrorCommonCode,
+			CallStack:         GetStack(),
 		}
 	}
 	return &Error{
 		Msg:           fmt.Sprintf(format, a...),
 		InternalError: er,
 		Code:          ErrorCommonCode,
+		CallStack:     GetStack(),
 	}
 }
 
@@ -220,7 +252,9 @@ func (e *Error) AppendList(sub ...*Error) (eOut *Error) {
 			continue
 		}
 		if eOut == nil {
-			eOut = &Error{}
+			eOut = &Error{
+				CallStack: GetStack(),
+			}
 		}
 
 		eOut.InternalErrors = append(eOut.InternalErrors, ei)
