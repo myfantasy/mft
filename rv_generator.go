@@ -15,7 +15,7 @@ type G struct {
 	AddValue int64
 }
 
-var GlobalGenerator G
+var GlobalGenerator *G = &G{}
 
 // RvGet2 - Generate Next RV (sync)
 func (g *G) RvGet() int64 {
@@ -53,7 +53,7 @@ func (g *G) RvGetPart() int64 {
 	k := g.rvc
 	g.rvmx.Unlock()
 
-	if k > 10 {
+	if k >= 10 {
 		time.Sleep(time.Microsecond)
 		return g.RvGetPart()
 	}
