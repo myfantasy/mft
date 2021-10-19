@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type ErrorLabelName string
+
 // Error type with internal
 type Error struct {
 	Code              int      `json:"code,omitempty"`
@@ -15,6 +17,8 @@ type Error struct {
 	InternalError     *Error   `json:"ie,omitempty"`
 	InternalErrors    []*Error `json:"ies,omitempty"`
 	CallStack         string   `json:"call_stack,omitempty"`
+
+	Labels map[ErrorLabelName]string `json:"labels,omitempty"`
 }
 
 // ErrorCommonCode - no code error
@@ -55,6 +59,18 @@ func (e *Error) Error() string {
 	if e.CallStack != "" {
 		callStack = "\n" + rowPrefixAdd(e.CallStack, InnerErrorPrefix)
 	}
+	labels := ""
+	if len(e.Labels) > 0 {
+		nfr := false
+		for k, v := range e.Labels {
+			if nfr {
+				labels += " "
+			}
+			labels += fmt.Sprintf("%v:%v", k, v)
+			nfr = true
+		}
+		labels = "\n" + rowPrefixAdd(labels, InnerErrorPrefix)
+	}
 
 	if e.InternalErrorText == "" && e.InternalError == nil {
 		return cd + e.Msg + listMsgs + callStack
@@ -65,7 +81,8 @@ func (e *Error) Error() string {
 	}
 
 	return cd + e.Msg + "\n" + rowPrefixAdd(e.InternalError.Error(), InnerErrorPrefix) +
-		"\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs + callStack
+		"\n" + rowPrefixAdd(e.InternalErrorText, InnerErrorPrefix) + listMsgs +
+		callStack + labels
 }
 
 func GetStack() string {
@@ -260,4 +277,48 @@ func (e *Error) AppendList(sub ...*Error) (eOut *Error) {
 		eOut.InternalErrors = append(eOut.InternalErrors, ei)
 	}
 	return eOut
+}
+
+func (e *Error) AppendLabel(name ErrorLabelName, value string) *Error {
+	if e != nil {
+		if e.Labels == nil {
+			e.Labels = make(map[ErrorLabelName]string)
+		}
+		e.Labels[name] = value
+	}
+	return e
+}
+
+func (e *Error) AppendLabels(labels map[ErrorLabelName]string) *Error {
+	if e != nil && len(labels) > 0 {
+		for k, v := range labels {
+			e.AppendLabel(k, v)
+		}
+	}
+	return e
+}
+
+func (e *Error) GetLabel(name ErrorLabelName) (value string, ok bool) {
+	if e != nil {
+		if e.Labels == nil {
+			return "", false
+		}
+		value, ok = e.Labels[name]
+		return value, ok
+	}
+	return "", false
+}
+
+func (e *Error) GetLabelOrDefailt(name ErrorLabelName, defaultValue string) (value string) {
+	if e != nil {
+		if e.Labels == nil {
+			return defaultValue
+		}
+		value, ok := e.Labels[name]
+		if ok {
+			return value
+		}
+		return defaultValue
+	}
+	return defaultValue
 }
