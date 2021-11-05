@@ -12,7 +12,7 @@ type G struct {
 	rvmx sync.Mutex
 	//rvmx RWCMutex
 
-	AddValue int64
+	AddValue int64 `json:"generator_add_value,omitempty"`
 }
 
 var GlobalGenerator *G = &G{}
@@ -59,6 +59,24 @@ func (g *G) RvGetPart() int64 {
 	}
 
 	return t + g.AddValue
+}
+
+// RvGet2 - Generate Next RV (sync)
+// global is used if g == nil
+func (g *G) RvGetOrGlobal() int64 {
+	if g != nil {
+		return g.RvGet()
+	}
+	return RvGet()
+}
+
+// RvGetPartOrGlobal - Generate Next RV (sync) partitioned by (x%10000)/10
+// global is used if g == nil
+func (g *G) RvGetPartOrGlobal() int64 {
+	if g != nil {
+		return g.RvGetPart()
+	}
+	return RvGetPart()
 }
 
 // RvGet - Generate Next RV (sync)
